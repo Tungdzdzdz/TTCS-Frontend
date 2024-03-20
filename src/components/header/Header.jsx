@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../AppContext";
+import { FaBell } from "react-icons/fa";
 
 const appFunc = [
     {
@@ -8,27 +9,31 @@ const appFunc = [
     },
     {
         title: "Result",
-        path: "/"
+        path: "/result"
     },
     {
         title: "Fixture",
-        path: "/"
+        path: "/fixture"
     },
     {
         title: "Table",
-        path: "/"
+        path: "/table"
     },
     {
         title: "Stat",
-        path: "/"
+        path: "/stat"
     },
     {
         title: "Club",
-        path: "/"
+        path: "/club"
     },
     {
         title: "Player",
-        path: "/"
+        path: "/player"
+    },
+    {
+        title: "Coach",
+        path: "/coach"
     },
 ]
 
@@ -93,6 +98,9 @@ function Header({ authenticated }) {
                 )}
                 {authenticated && (
                     <div className="flex items-center pr-5">
+                        <div className="h-full flex items-center justify-center mr-3">
+                            <FaBell className="text-white hover:cursor-pointer"/>
+                        </div>
                         {
                             welFunc.map((e, i) => {
                                 return <Link

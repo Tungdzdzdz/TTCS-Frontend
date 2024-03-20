@@ -30,21 +30,28 @@ function Login() {
             body: JSON.stringify({ username, password })
         }
         const url = "http://localhost:8088/api/v1/auth/login"
-        const response = await fetch(url, options);
-        if (response.ok) {
-            const token = await response.json();
-            setAuthToken(token.token);
-            navigate('/');
+        try{
+            const response = await fetch(url, options);
+            if (response.ok) {
+                const token = await response.json();
+                setAuthToken(token.token);
+                navigate('/');
+            }
+            else {
+                const errors = await response.json();
+                errors.forEach((e, i) => {
+                    toast.error(`Error: ${e.message}`, {toastId: i});
+                });
+            }
         }
-        else {
-            const errors = await response.json();
-            errors.forEach((e, i) => {
-                toast.error(`Error: ${e.message}`, {position:"top-center", autoClose:3000, toastId: i});
-            });
+        catch(error)
+        {
+            toast.error(`Error: Internal error`);
         }
     }
 
     useEffect(() => {
+        console.log(authToken)
         authToken && navigate('/');
     }, [authToken]);
 

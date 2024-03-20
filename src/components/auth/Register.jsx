@@ -23,7 +23,7 @@ function Register() {
 
     const {authToken} = useAppContext();
 
-    const onRegister = async() => {
+    const onRegister = async(e) => {
         e.preventDefault();
         const url = "http://localhost:8088/api/v1/auth/register"
         const options = {
@@ -31,17 +31,22 @@ function Register() {
             method: "POST",
             body: JSON.stringify({username, password, retypePassword, email, roleId: admin ? 2 : 1}),
         }
-        const response = await fetch(url, options);
-        if(response.ok)
-        {
-            navigate("/auth/login");
+        try{
+            const response = await fetch(url, options);
+            if(response.ok)
+            {
+                navigate("/auth/login");
+            }
+            else
+            {
+                const errors = await response.json();
+                errors.forEach((e, i) => {
+                    toast.error(`Error: ${e.message}`, {toastId: i});
+                });
+            }
         }
-        else
-        {
-            const errors = await response.json();
-            errors.forEach((e, i) => {
-                toast.error(`Error: ${e.message}`, {position:"top-center", autoClose:3000, toastId: i});
-            });
+        catch(error) {
+            toast.error(`Error: Internal error`);
         }
     }
 

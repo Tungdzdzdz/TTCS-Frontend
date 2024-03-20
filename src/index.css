@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+h1{
+    font-size: 30px;
+    font-weight: 600;
+    color: #37003c
+}
+
+h3 {
+    font-size: 25px;
+    font-weight: 600;
+    color: #37003c
+}
+
+h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #37003c
+}
+
+span {
+    font-size: 10px;
+}

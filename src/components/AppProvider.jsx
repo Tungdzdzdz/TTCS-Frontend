@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AppContext } from "./AppContext"
 
 function AppProvider({ children }) {
-    const tokenStorage = sessionStorage.getItem('token');
+    const tokenStorage = sessionStorage.getItem('token') === null ? '' : sessionStorage.getItem('token');
     const [authToken, setAuthToken] = useState(tokenStorage);
 
     useEffect(() => {

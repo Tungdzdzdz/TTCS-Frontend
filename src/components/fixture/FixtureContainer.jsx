@@ -1,38 +1,8 @@
 import Match from "../match/Match";
 import Filter from "../hcom/Filter";
 import FuncContainer from "../hcom/FuncContainer";
-
-const fixtures = [
-    {
-        date: "17/03/2024",
-        matches: [
-            {
-                homeTeam: "Manchester United",
-                homeLogo: "https://resources.premierleague.com/premierleague/badges/50/t1.png",
-                awayTeam: "Manchester United",
-                awayLogo: "https://resources.premierleague.com/premierleague/badges/50/t1.png",
-                time: "21:00",
-                stadium: "Old Trafford",
-            },
-            {
-                homeTeam: "Manchester United",
-                homeLogo: "https://resources.premierleague.com/premierleague/badges/50/t1.png",
-                awayTeam: "Manchester United",
-                awayLogo: "https://resources.premierleague.com/premierleague/badges/50/t1.png",
-                time: "21:00",
-                stadium: "Old Trafford",
-            },
-            {
-                homeTeam: "Manchester United",
-                homeLogo: "https://resources.premierleague.com/premierleague/badges/50/t1.png",
-                awayTeam: "Manchester United",
-                awayLogo: "https://resources.premierleague.com/premierleague/badges/50/t1.png",
-                time: "21:00",
-                stadium: "Old Trafford",
-            }
-        ],
-    }
-]
+import useData from "../hook/useData";
+import { useState } from "react";
 
 const options1 = [
     {
@@ -61,29 +31,45 @@ const options1 = [
     },
 ]
 
-function FixtureContainer()
-{
+function FixtureContainer() {
+    const [data, setData] = useState(null);
+    useData(async () => {
+        const url = "http://localhost:3000/fixture";
+        const response = await fetch(url);
+        try {
+            const fetchData = await response.json();
+            setData(fetchData);
+        } catch (error) {
+            console.log("Error: " + error);
+        }
+    });
     return (
         <FuncContainer title={"Fixtures"}>
             <div className="h-full w-full flex gap-2 mt-5">
-                <Filter options={options1} title={"All club"}/>
-                <Filter options={options1} title={"All club"}/>
-                <Filter options={options1} title={"All club"}/>
+                <Filter options={options1} title={"All club"} />
+                <Filter options={options1} title={"All club"} />
+                <Filter options={options1} title={"All club"} />
             </div>
-            {fixtures.map((fixture, i) => {
-                return (
-                    <div className="w-full h-fit flex flex-col" key={`fixture${i}`}>
-                        <h2 className="p-3 font-bold text-[20px]">{fixture.date}</h2>
-                        {
-                            fixture.matches.map((match, index) => {
-                                return (
-                                    <Match match={match} key={`fixtureMatch${index}`}/>
-                                )
-                            })
+            {data &&
+                <div className="w-full h-fit flex flex-col">
+                    <h2 className="font-bold text-[20px] my-5">Matchweek {data.filters.matchday}</h2>
+                    {data.matches.map((fixture, i) => {
+                        const time = new Date(fixture.utcDate);
+                        const hours = time.getUTCHours().toString().padStart(2, "0");
+                        const minutes = time.getUTCMinutes().toString().padStart(2, "0");
+                        const timeString = `${hours}:${minutes}`;
+                        const match = {
+                            homeTeam: fixture.homeTeam.name,
+                            homeLogo: fixture.homeTeam.crest,
+                            awayTeam: fixture.awayTeam.name,
+                            awayLogo: fixture.awayTeam.crest,
+                            time: timeString,
+                            stadium: "Old Trafford"
                         }
-                    </div>
-                )
-            })}
+                        return (<Match match={match} key={`fixtureMatch${i}`} />)
+                    })}
+                </div>
+            }
         </FuncContainer>
     )
 }

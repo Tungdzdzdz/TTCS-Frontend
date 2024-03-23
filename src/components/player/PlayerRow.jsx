@@ -1,7 +1,7 @@
-function PlayerRow({ data }) {
+function PlayerRow({ data, onPlayerClick}) {
     return (
-        <div className="h-fit w-full flex border-b-2">
-            <div className="flex items-center flex-1 p-2 gap-5 hover:underline hover:cursor-pointer">
+        <div className="h-fit w-full flex border-b-2 hover:underline hover:cursor-pointer" onClick={onPlayerClick}>
+            <div className="flex items-center flex-1 p-2 gap-5">
                 <div>
                     <img className="h-[40px]" src={data.img} />
                 </div>
@@ -10,7 +10,7 @@ function PlayerRow({ data }) {
                 </div>
             </div>
             <div className="flex items-center flex-1 p-2">
-                <lable>{data.position}</lable>
+                <label>{data.position}</label>
             </div>
             <div className="flex items-center flex-1 p-2 gap-5">
                 <div>
@@ -21,8 +21,14 @@ function PlayerRow({ data }) {
                 </div>
             </div>
             <div className="flex items-center justify-start flex-1 p-2">
-                <lable>{data.nationality}</lable>
+                <label>{data.nationality}</label>
             </div>
+            {
+                data.stat &&
+                <div className="flex items-center justify-start flex-1 p-2">
+                    <label>{data.stat}</label>
+                </div>
+            }
         </div>
     )
 }

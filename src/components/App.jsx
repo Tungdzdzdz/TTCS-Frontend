@@ -8,7 +8,7 @@ function App() {
       <Header></Header>
       <div className='h-full'>
         <Outlet/>
-        <ToastContainer autoClose={3000} position='top-center'/>
+        <ToastContainer autoClose={3000} position='top-center' draggable={true} pauseOnHover={false}/>
       </div>
     </div>
   )

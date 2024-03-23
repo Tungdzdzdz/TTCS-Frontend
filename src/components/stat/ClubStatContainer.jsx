@@ -1,8 +1,7 @@
 import { useState } from "react";
-import Filter from "../hcom/Filter";
-import FuncContainer from "../hcom/FuncContainer";
 import useData from "../hook/useData";
-import PlayerList from "./PlayerList";
+import Filter from "../hcom/Filter";
+import ClubList from "../club/ClubList";
 
 const options1 = [
     {
@@ -31,31 +30,33 @@ const options1 = [
     },
 ]
 
-const columnField = ["Player", "Position", "Club", "Nationality"];
+const columnField = ["Rank", "Club", "Stat"];
 
-function PlayerContainer() {
+function ClubStatContainer() {
     const [data, setData] = useState();
     useData(async () => {
         const url = "http://localhost:3000/clubs";
         const response = await fetch(url);
         try {
             const fetchData = await response.json();
-            setData(fetchData);
+            console.log(fetchData.teams)
+            setData(fetchData.teams);
         } catch (error) {
             toast.error("Error: " + error);
         }
-
-    })
+    });
     return (
-        <FuncContainer title={"Players"}>
-            <div className="h-full w-full flex gap-2 mt-5">
-                <Filter options={options1} title={"Search your club ..."} />
-                <Filter options={options1} title={"Search your club ..."} />
-                <Filter options={options1} title={"Search your club ..."} />
+        <div className="h-full w-full flex justify-center">
+            <div className="h-full w-3/4 bg-white flex flex-col">
+                <div className="h-full w-full flex gap-2 mt-5">
+                    <Filter options={options1} title={"Search your club ..."} />
+                    <Filter options={options1} title={"Search your club ..."} />
+                    <Filter options={options1} title={"Search your club ..."} />
+                </div>
+                {data && <ClubList columnField={columnField} dataClub={data} stat={10} />}
             </div>
-            <PlayerList dataPlayer={data} columnField={columnField}></PlayerList>
-        </FuncContainer>
+        </div>
     )
 }
 
-export default PlayerContainer;
+export default ClubStatContainer;

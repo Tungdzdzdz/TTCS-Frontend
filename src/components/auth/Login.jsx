@@ -51,7 +51,6 @@ function Login() {
     }
 
     useEffect(() => {
-        console.log(authToken)
         authToken && navigate('/');
     }, [authToken]);
 

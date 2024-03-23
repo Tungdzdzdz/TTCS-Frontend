@@ -17,7 +17,6 @@ function Register() {
     const onSetPassword = e => setPassword(e.target.value);
     const onSetRetypePassword = e => setRetypePassword(e.target.value);
     const onSetEmail = e => setEmail(e.target.value);
-    const onSetAdmin = e => setAdmin(!admin);
 
     const navigate = useNavigate();
 
@@ -66,7 +65,6 @@ function Register() {
                 <InputComponent type="password" field={"Password"} valueInput={password} onChangeInput={onSetPassword} />
                 <InputComponent type="password" field={"Retype Password"} valueInput={retypePassword} onChangeInput={onSetRetypePassword} />
                 <InputComponent type="email" field="Email" valueInput={email} onChangeInput={onSetEmail}/>
-                <InputComponent type={"checkbox"} field={"Admin"} valueInput={false} onChangeInput={onSetAdmin}/>
         </AuthForm>
     )
 }

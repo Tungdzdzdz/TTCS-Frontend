@@ -1,9 +1,9 @@
 import { useState } from "react";
 import Filter from "../hcom/Filter";
-import FuncContainer from "../hcom/FuncContainer";
+import PlayerList from "../player/PlayerList";
 import useData from "../hook/useData";
-import ClubListBox from "./ClubListBox";
 
+const columnField = ["Player", "Position", "Club", "Nationality", "Stat"];
 const options1 = [
     {
         value: "all",
@@ -31,30 +31,30 @@ const options1 = [
     },
 ]
 
-
-function ClubContainer() {
+function PlayerStatContainer() {
     const [data, setData] = useState();
     useData(async () => {
         const url = "http://localhost:3000/clubs";
         const response = await fetch(url);
-        try{
+        try {
             const fetchData = await response.json();
             setData(fetchData);
-        }
-        catch (error) {
-            console.log("Error: " + error);
+        } catch (error) {
+            toast.error("Error: " + error);
         }
     });
     return (
-        <FuncContainer title={"Clubs"}>
-            <div className="h-full w-full flex gap-2 mt-5">
-                <Filter options={options1} title={"Search your club ..."} />
-                <Filter options={options1} title={"Search your club ..."} />
-                <Filter options={options1} title={"Search your club ..."} />
+        <div className="h-full w-full flex justify-center">
+            <div className="h-full w-3/4 bg-white flex flex-col">
+                <div className="h-full w-full flex gap-2 mt-5">
+                    <Filter options={options1} title={"Search your club ..."} />
+                    <Filter options={options1} title={"Search your club ..."} />
+                    <Filter options={options1} title={"Search your club ..."} />
+                </div>
+                <PlayerList columnField={columnField} dataPlayer={data} stat={10} />
             </div>
-            <ClubListBox data={data}/>
-        </FuncContainer>
+        </div>
     )
 }
 
-export default ClubContainer;
+export default PlayerStatContainer;

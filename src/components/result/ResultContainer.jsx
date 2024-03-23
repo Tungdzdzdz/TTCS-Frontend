@@ -3,6 +3,7 @@ import Filter from "../hcom/Filter";
 import FuncContainer from "../hcom/FuncContainer";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import useData from "../hook/useData";
 
 const results = [
     {
@@ -123,21 +124,16 @@ const options1 = [
 
 function ResultContainer() {
     const [data, setData] = useState(null);
-    useEffect(() => {
-        const fetchApi = async () => {
-            const url = "http://localhost:3000/match";
-            const response = await fetch(url);
-            try {
-                const fetchData = await response.json();
-                console.log(fetchData.filters);
-                setData(fetchData);
-            } catch (error) {
-                toast.error("Error: " + error);
-            }
+    useData(async () => {
+        const url = "http://localhost:3000/match";
+        const response = await fetch(url);
+        try {
+            const fetchData = await response.json();
+            setData(fetchData);
+        } catch (error) {
+            toast.error("Error: " + error);
         }
-
-        fetchApi();
-    }, [data]);
+    });
     return (
         <FuncContainer title={"Results"}>
             <div className="h-full w-full flex gap-2 mt-5">

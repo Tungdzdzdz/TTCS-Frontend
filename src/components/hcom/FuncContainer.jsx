@@ -8,7 +8,7 @@ function FuncContainer({children, title})
                 </div>
             </div>
             <div className="h-full w-full flex justify-center">
-                <div className="h-full w-3/4 bg-white flex flex-col">
+                <div className="h-full w-3/4 bg-white flex flex-col gap-4">
                     {children}
                 </div>
             </div>

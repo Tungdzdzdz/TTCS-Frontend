@@ -1,210 +1,332 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IoMdFootball } from "react-icons/io";
-import { GiCardRandom } from "react-icons/gi";
+import { GiBaseballGlove, GiCardRandom, GiGoalKeeper } from "react-icons/gi";
 import { IoIosSwap } from "react-icons/io";
 import { MdOutlineTimer, MdStadium } from "react-icons/md";
 import { FaCalendarAlt } from "react-icons/fa";
 import useData from "../hook/useData";
 import { toast } from "react-toastify";
-import ListContainer from "../hcom/ListContainer";
+import yellowcard from "../../assets/yellowcard.svg";
 import MatchSquadSub from "./MatchSquadSub";
+import { useLocation, useNavigate } from "react-router-dom";
+import FuncContainer from "../hcom/FuncContainer";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
+import { Client } from "@stomp/stompjs";
+import { useAppContext } from "../AppContext";
 function MatchDetail() {
-    const [match, setMatch] = useState();
+    const { state } = useLocation();
+    const [data, setData] = useState(state);
     const [matchDetail, setMatchDetail] = useState();
-    useData(async () => {
-        const response = await fetch("http://localhost:3000/matchDetail");
+    const [statistics, setStatistics] = useState();
+    const [mainSquad, setMainSquad] = useState();
+    const [subSquad, setSubSquad] = useState();
+
+    const [result, setResult] = useState(null);
+    const navigate = useNavigate();
+
+    const { client } = useAppContext();
+
+    useEffect(() => {
+        console.log(state)
+        if(!state)
+        {
+            navigate("/not-found")
+            return;
+        }
+    }, [state])
+
+    useEffect(() => {
+        if(!client || !data) 
+        {
+            return;
+        }
+        let subscription = client.subscribe('/topic/match/' + data.id, (message) => {
+            const md = JSON.parse(message.body);
+            if(md.type === "DELETE")
+                setMatchDetail(pre => pre.filter(e => e.id !== md.matchDetail.id));
+            else if(md.type === "CREATE")
+                setMatchDetail(pre => [...pre, md.matchDetail].sort((a, b) => a.eventTime - b.eventTime));
+        });
+        return () => {
+            if (subscription)
+                subscription.unsubscribe();
+        }
+    }, [data, client])
+
+    const getResult = async () => {
+        const url = `http://localhost:8088/api/v1/matchdetail/result/match/${data.id}`;
+        const response = await fetch(url);
         try {
-            const rawMatch = await response.json();
-            const goals = rawMatch.goals.map(e => ({
-                ...e,
-                type: "goal"
-            }));
-            const bookings = rawMatch.bookings.map(e => ({
-                ...e,
-                type: "booking"
-            }))
-            const substitutions = rawMatch.substitutions.map(e => ({
-                ...e,
-                type: "substitution"
-            }))
-            setMatchDetail([...goals, ...bookings, ...substitutions].sort((a, b) => a.minute - b.minute));
-            setMatch(rawMatch);
+            const fetchData = await response.text();
+            setResult(fetchData);
         } catch (error) {
             toast.error("Error: " + error);
         }
-    })
+    };
 
-    const eventGoal = (event, home, i) => {
+    const getMatchDetail = async () => {
+        const url = `http://localhost:8088/api/v1/matchdetail/match/${data.id}`;
+        const response = await fetch(url);
+        try {
+            const fetchData = await response.json();
+            setMatchDetail(fetchData);
+        } catch (error) {
+            toast.error("Error: " + error);
+        }
+    };
+
+    const getStatistics = async () => {
+        const url = `http://localhost:8088/api/v1/matchdetail/statistic/match/${data.id}`;
+        const response = await fetch(url);
+        try {
+            const fetchData = await response.json();
+            setStatistics(fetchData);
+        } catch (error) {
+            toast.error("Error: " + error);
+        }
+    }
+
+    const getSquad = async (clubStatId, home) => {
+        const url = `http://localhost:8088/api/v1/squad/match/${data.id}`;
+        const response = await fetch(url);
+        try {
+            const fetchData = await response.json();
+            setMainSquad(fetchData.filter(e => e.type === true));
+            setSubSquad(fetchData.filter(e => e.type === false));
+        } catch (error) {
+            toast.error("Error: " + error);
+        }
+    }
+
+    useData(getResult, [matchDetail]);
+    useData(getMatchDetail, []);
+    useData(getStatistics, [matchDetail]);
+    useData(getSquad, []);
+
+    const matchDetailGoal = (md, home, i) => {
         return (
-            <div className="h-fit w-full grid grid-cols-3 gap-5 text-white justify-items-center items-center" key={i}>
+            <div className="h-fit w-full grid grid-cols-3 gap-5 justify-items-center items-center" key={i}>
                 <div className="flex gap-3">
-                    <label className="text-white">{home && event.scorer.name}</label>
-                    {home && <IoMdFootball color="white" size={20} />}
+                    <label>{home && md.playerStat.player.name}</label>
+                    {home && <GiGoalKeeper size={20} />}
                 </div>
-                <label>{event.minute}'</label>
+                <label>{md.eventTime}'</label>
                 <div className="flex gap-3">
-                    {!home && <IoMdFootball color="white" size={20} />}
-                    <label className="text-white">{!home && event.scorer.name}</label>
+                    {!home && <GiGoalKeeper size={20} />}
+                    <label>{!home && md.playerStat.player.name}</label>
                 </div>
             </div>
         )
     }
 
-    const eventBooking = (event, home, i) => {
+    const matchDetailSave = (md, home, i) => {
         return (
-            <div className="w-full grid grid-cols-3 gap-5 text-white justify-items-center items-center" key={i}>
+            <div className="h-fit w-full grid grid-cols-3 gap-5 justify-items-center items-center" key={i}>
                 <div className="flex gap-3">
-                    <label className="text-white">{home && event.player.name}</label>
-                    {home && <GiCardRandom color={event.card} size={20} />}
+                    <label>{home && md.playerStat.player.name}</label>
+                    {home && <GiBaseballGlove size={20} />}
                 </div>
-                <label>{event.minute}'</label>
+                <label>{md.eventTime}'</label>
                 <div className="flex gap-3">
-                    {!home && <GiCardRandom color={event.card} size={20} />}
-                    <label className="text-white">{!home && event.player.name}</label>
+                    {!home && <GiBaseballGlove size={20} />}
+                    <label>{!home && md.playerStat.player.name}</label>
                 </div>
             </div>
         )
     }
 
-    const eventSubstitution = (event, home, i) => {
+    const matchDetailBooking = (md, home, i) => {
         return (
-            <div className="w-full grid grid-cols-3 gap-5 text-white justify-items-center items-center" key={i}>
+            <div className="w-full grid grid-cols-3 gap-5 justify-items-center items-center" key={i}>
+                <div className="flex gap-3">
+                    <label className>{home && md.playerStat.player.name}</label>
+                    {home && md.event.id === 3 && <img src={yellowcard} className="h-[20px] bg-yellow-400" />}
+                    {home && md.event.id === 2 && <img src={yellowcard} className="h-[20px] bg-red-400" />}
+                </div>
+                <label>{md.eventTime}'</label>
+                <div className="flex gap-3">
+                    {!home && md.event.id === 3 && <img src={yellowcard} className="h-[20px] bg-yellow-400" />}
+                    {!home && md.event.id === 2 && <img src={yellowcard} className="h-[20px] bg-red-400" />}
+                    <label>{!home && md.playerStat.player.name}</label>
+                </div>
+            </div>
+        )
+    }
+
+    const matchDetailSubstitution = (md, home, i) => {
+        return (
+            <div className="w-full grid grid-cols-3 gap-5 justify-items-center items-center" key={i}>
                 <div className="flex flex-col gap-5">
-                    <div className="flex gap-3">
-                        <label className="text-white">{home && event.playerIn.name}</label>
-                        {home && <IoIosSwap color="green" size={20} />}
-                    </div>
-                    <div className="flex gap-3">
-                        <label className="text-white">{home && event.playerOut.name}</label>
+                    {md.event.id === 6 && <div className="flex gap-3">
+                        <label>{home && md.playerStat.player.name}</label>
+                        {home && <IoIosSwap color="#00FF00" className="shadow-none outline-none border-none" size={20} />}
+                    </div>}
+                    {md.event.id === 7 && <div className="flex gap-3">
+                        <label>{home && md.playerStat.player.name}</label>
                         {home && <IoIosSwap color="red" size={20} />}
-                    </div>
+                    </div>}
                 </div>
-                <label>{event.minute}'</label>
+                <label>{md.eventTime}'</label>
                 <div className="flex flex-col gap-5">
-                    <div className="flex gap-3">
-                        {!home && <IoIosSwap color="green" size={20} />}
-                        <label className="text-white">{!home && event.playerIn.name}</label> 
-                    </div>
-                    <div className="flex gap-3">
+                    {md.event.id === 6 && <div className="flex gap-3">
+                        {!home && <IoIosSwap color="#00FF00" size={20} />}
+                        <label>{!home && md.playerStat.player.name}</label>
+                    </div>}
+                    {md.event.id === 7 && <div className="flex gap-3">
                         {!home && <IoIosSwap color="red" size={20} />}
-                        <label className="text-white">{!home && event.playerOut.name}</label>
-                    </div>
+                        <label>{!home && md.playerStat.player.name}</label>
+                    </div>}
                 </div>
             </div>
         )
     }
 
-    const eventContent = (event, i) => {
-        if (event.team.id === match.homeTeam.id) {
-            if (event.type === "goal") {
-                return eventGoal(event, true, i)
+    const matchDetailContent = (md, i) => {
+        if (md.clubStat.id === data.homeClubStat.id) {
+            if (md.event.id === 1) {
+                return matchDetailGoal(md, true, i)
             }
-            else if (event.type === "booking") {
-                return eventBooking(event, true, i)
+            else if (md.event.id === 2 || md.event.id === 3) {
+                return matchDetailBooking(md, true, i)
             }
-            else if (event.type === "substitution") {
-                return eventSubstitution(event, true, i)
+            else if (md.event.id === 6 || md.event.id === 7) {
+                return matchDetailSubstitution(md, true, i)
+            }
+            else if (md.event.id === 10) {
+                return matchDetailSave(md, true, i)
             }
         }
         else {
-            if (event.type === "goal") {
-                return eventGoal(event, false, i)
+            if (md.event.id === 1) {
+                return matchDetailGoal(md, false, i)
             }
-            else if (event.type === "booking") {
-                return eventBooking(event, false, i)
+            else if (md.event.id === 2 || md.event.id === 3) {
+                return matchDetailBooking(md, false, i)
             }
-            else if (event.type === "substitution") {
-                return eventSubstitution(event, false, i)
+            else if (md.event.id === 6 || md.event.id === 7) {
+                return matchDetailSubstitution(md, false, i)
+            }
+            else if (md.event.id === 10) {
+                return matchDetailSave(md, false, i)
             }
         }
     }
 
-    const formattedDate = (d) => {
-        const date = new Date('2022-02-12T12:30:00Z');
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // January is 0!
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
+    const tranformKey = (key) => {
+        switch (key) {
+            case "shot":
+                return "Shot";
+            case "foul":
+                return "Foul";
+            case "offside":
+                return "Offside";
+            case "yellowCard":
+                return "Yellow card";
+            case "redCard":
+                return "Red card";
+            case "saves":
+                return "Saves";
+            default:
+                return key;
+        }
     }
 
-    const formattedTime = (d) => {
-        const date = new Date('2022-02-12T12:30:00Z');
-        const hour = String(date.getHours()).padStart(2, '0');
-        const minute = String(date.getMinutes()).padStart(2, '0');
-        return `${hour}:${minute}`;
-    }
-
-    if (match !== undefined) {
-        return (
-            <div className="h-fit w-full flex flex-col absolute gap-5">
-                <div className="h-fit w-full bg-gradient-to-r from-sky-400 to-purple-500 mt-10 flex flex-col items-center justify-center gap-5">
-                    <div className="w-fit h-fit flex items-center p-10 gap-5">
-                        <div className="h-fit w-fit flex items-center gap-2">
-                            <h1 className="text-white text-[60px]">{match.homeTeam.shortName}</h1>
-                            <img className="h-[100px]" src={match.homeTeam.crest} />
+    return state ? (
+        <FuncContainer title={"Result"}>
+            <div className="w-full h-full flex justify-around mt-10 gap-5">
+                <div className="h-full w-3/4 flex flex-col items-center gap-6 overflow-hidden rounded-xl border-2 p-5">
+                    <div className="h-fit w-full flex justify-center gap-10 items-center">
+                        <div className="h-[100px] flex items-center justify-end gap-4 w-1/3">
+                            <h3>{data.homeClubStat.club.name}</h3>
+                            <img src={data.homeClubStat.club.logo} className="h-[80px]" />
                         </div>
-                        <div className="h-[100px] w-fit">
-                            <h1 className="text-white text-[60px]">{match.score.fullTime.home} - {match.score.fullTime.away}</h1>
-                        </div>
-                        <div className="h-fit w-fit flex items-center gap-2">
-                            <img className="h-[100px]" src={match.awayTeam.crest} />
-                            <h1 className="text-white text-[60px]">{match.awayTeam.shortName}</h1>
+                        {result && <div className="h-fit p-2 w-1/3 justify-center items-center flex flex-col">
+                            <h3 className="text-[30px] text-center">{result}</h3>
+                            {
+                                matchDetail && matchDetail.find((md, i) => {
+                                    return md.event.id === 5;
+                                }) === undefined && new Date(data.matchDate) < Date.now() &&
+                                <span class="animate-ping w-2 h-2 rounded-full bg-red-800 opacity-90"></span>
+                            }
+                        </div>}
+                        <div className="h-[100px] flex items-center gap-4 w-1/3 justify-start">
+                            <img src={data.awayClubStat.club.logo} className="h-[80px] " />
+                            <h3>{data.awayClubStat.club.name}</h3>
                         </div>
                     </div>
-                    <div className="w-3/4 h-fit flex flex-col items-center p-5 gap-5">
-                        {
-                            matchDetail.map((e, i) => {
-                                return eventContent(e, i);
-                            })
-                        }
+                    <div className="flex flex-col h-fit w-full px-10">
+                        <Tabs defaultIndex={0}>
+                            <TabList>
+                                <Tab>Match Detail</Tab>
+                                <Tab>Statistics</Tab>
+                                <Tab>Squad</Tab>
+                            </TabList>
+                            <TabPanel>
+                                {matchDetail && matchDetail.map((md, i) => {
+                                    if (md.event.id === 1 || md.event.id === 2 || md.event.id === 3 || md.event.id === 6 || md.event.id === 7 || md.event.id === 10)
+                                        return (
+                                            <div className="flex w-full min-w-[800px] h-fit gap-4 p-2" key={i}>
+                                                {matchDetailContent(md, i)}
+                                            </div>)
+                                })}
+                            </TabPanel>
+                            <TabPanel style={{ marginTop: "20px", display: "flex", flexDirection: "column", rowGap: "20px" }}>
+                                {
+                                    statistics && Object.keys(statistics).map((key, i) => {
+                                        return (
+                                            <div className="w-full h-fit grid grid-cols-5" key={i}>
+                                                <div className="flex justify-center col-span-2">
+                                                    <label className="text-[#37003C]">{statistics[key][0]}</label>
+                                                </div>
+                                                <div className="flex justify-center">
+                                                    <label className="text-[#37003C]">{tranformKey(key)}</label>
+                                                </div>
+                                                <div className="flex justify-center col-span-2">
+                                                    <label className="text-[#37003C]">{statistics[key][1]}</label>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </TabPanel>
+                            <TabPanel>
+                                <div className="w-full h-fit flex gap-4">
+                                    <MatchSquadSub
+                                        data={mainSquad}
+                                        type="main"
+                                        home={data.homeClubStat}
+                                        away={data.awayClubStat}
+                                    />
+                                    <MatchSquadSub
+                                        data={subSquad}
+                                        type="sub"
+                                        home={data.homeClubStat}
+                                        away={data.awayClubStat}
+                                    />
+                                </div>
+                            </TabPanel>
+                        </Tabs>
                     </div>
                 </div>
-                <div className="h-fit w-full flex p-20 gap-5">
-                    <div className="h-fit w-1/4 flex flex-col rounded-xl overflow-hidden shadow-xl">
-                        <div className="h-fit flex justify-center items-center w-full bg-gradient-to-r from-sky-400 to-blue-600 p-3">
-                            <h1 className="text-white self-center">Statistics</h1>
+                <div className="h-fit w-fit border-2 rounded-xl">
+                    <div className="h-fit w-full flex flex-col gap-5 p-5">
+                        <div className="h-fit w-full flex items-center gap-5">
+                            <FaCalendarAlt size={30} />
+                            <label>{new Date(data.matchDate).toDateString()}</label>
                         </div>
-                        {
-                            Object.keys(match.homeTeam.statistics).map((field, i) => {
-                                const standardField = (field.slice(0, 1).toUpperCase() + field.slice(1)).split('_').join(' ');
-                                return (
-                                    <div key={i} className="h-[40px] w-full flex justify-between items-center border-b-2 p-2">
-                                        <label>{match.homeTeam.statistics[field]}</label>
-                                        <label>{standardField}</label>
-                                        <label>{match.awayTeam.statistics[field]}</label>
-                                    </div>
-                                )
-                            })
-                        }
-                    </div>
-                    <div className="w-full h-fit flex flex-col gap-8">
-                        <div className="flex flex-col w-full rounded-xl overflow-hidden gap-3 shadow-xl">
-                            <div className="h-fit flex justify-center items-center w-full bg-gradient-to-r from-sky-400 to-blue-600 p-3">
-                                <h3 className="text-white">Time & Place</h3>
-                            </div>
-                            <div className="grid grid-cols-4 justify-items-center items-center py-3">
-                                <label>Matchday {match.matchday}</label>
-                                <div className="flex gap-3">
-                                    <FaCalendarAlt size={20} />
-                                    <label>{formattedDate(match.utcDate)}</label>
-                                </div>
-                                <div className="flex gap-3">
-                                    <MdOutlineTimer size={20} />
-                                    <label>{formattedTime(match.utcDate)}</label>
-                                </div>
-                                <div className="flex gap-3">
-                                    <MdStadium size={20} />
-                                    <label>{match.venue }</label>
-                                </div>
-                            </div>
+                        <div className="h-fit w-full flex items-center gap-5">
+                            <MdStadium size={30} />
+                            <label>{data.homeClubStat.club.stadiumName}</label>
                         </div>
-                        <MatchSquadSub homeTeam={match.homeTeam} awayTeam={match.awayTeam} title="Lineup" type="lineup" />
-                        <MatchSquadSub homeTeam={match.homeTeam} awayTeam={match.awayTeam} title="Substitution" type="substitution" />
+                        <div className="h-fit w-full flex items-center gap-5">
+                            <MdOutlineTimer size={30} />
+                            <label>{new Date(data.matchDate).toLocaleTimeString()}</label>
+                        </div>
                     </div>
                 </div>
             </div>
-        );
-    }
+        </FuncContainer>
+    ) : <></>
 }
 
 export default MatchDetail;

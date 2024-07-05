@@ -3,20 +3,8 @@ import Filter from "../hcom/Filter";
 import FuncContainer from "../hcom/FuncContainer";
 import Table from "./Table";
 import useData from "../hook/useData";
-
-const table = Array(20).fill({
-    pos: 1,
-    logo: "https://resources.premierleague.com/premierleague/badges/t1.png",
-    name: "Manchester United",
-    match: 1,
-    win: 10,
-    draw: 0,
-    lost: 0,
-    gf: 100,
-    ga: 0,
-    gd: 100,
-    point: 3,
-});
+import { useAppContext } from "../AppContext";
+import { toast } from "react-toastify";
 
 const column = {
     pos: "Pos",
@@ -31,53 +19,54 @@ const column = {
     point: "Point",
 };
 
-const options1 = [
-    {
-        value: "all",
-        label: "All Club"
-    },
-    {
-        value: "1",
-        label: "Manchester United",
-    },
-    {
-        value: "2",
-        label: "Manchester United",
-    },
-    {
-        value: "3",
-        label: "Manchester United",
-    },
-    {
-        value: "4",
-        label: "Manchester United",
-    },
-    {
-        value: "5",
-        label: "Manchester United",
-    },
-]
-
 function TableContainer()
 {
     const [data, setData] = useState(null);
+    const {seasons, client} = useAppContext();
+    const [season, setSeason] = useState();
+
+    useEffect(() => {
+        if(!seasons) return;
+        setSeason(seasons[seasons.length-1].value);
+    })
+
     useData(async () => {
-        const url = "http://localhost:3000/standings";
+        if(!season) return;
+        const url = `http://localhost:8088/api/v1/clubstat/table/${season}`;
         const response = await fetch(url);
         try{
             const fetchData = await response.json();
-            setData(fetchData.standings[0].table);
+            setData(fetchData);
         }
         catch (error) {
-            console.log("Error: " + error);
+            toast.error("Error: " + error);
         }
-    });
+    }, [season]);
+
+    const onChangeSeasonFilter = async (optionSelected) => {
+        const url = `http://localhost:8088/api/v1/clubstat/table/${optionSelected.value}`;
+        const response = await fetch(url);
+        setSeason(optionSelected.value)
+        try{
+            const fetchData = await response.json();
+            setData(fetchData);
+        }
+        catch (error) {
+            toast.error("Error: " + error);
+        }
+    }
+
+    useEffect(() => {
+        if(!client || !season) return;
+        const subscription = client.subscribe(`/topic/clubstat/${season}`, message => {
+            console.log(JSON.parse(message.body));
+            setData(JSON.parse(message.body));
+        })
+    }, [client, season])
     return(
         <FuncContainer title={"Table"}>
             <div className="h-full w-full flex gap-2 mt-5">
-                <Filter options={options1} title={"Search your club ..."}/>
-                <Filter options={options1} title={"Search your club ..."}/>
-                <Filter options={options1} title={"Search your club ..."}/>
+                {seasons && <Filter options={seasons} onChange={onChangeSeasonFilter} defaultValue={seasons[seasons.length-1]} />}
             </div>
             {data && <Table column={column} data={data} fontSize={20}/>}
         </FuncContainer>

@@ -1,7 +1,3 @@
-import { useState } from "react";
-import Filter from "../hcom/Filter";
-import useData from "../hook/useData";
-import PlayerList from "../player/PlayerList";
 import { Outlet, useNavigate } from "react-router-dom";
 
 const statContainer = [

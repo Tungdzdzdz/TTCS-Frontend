@@ -3,7 +3,7 @@ import styles from "./Auth.module.css";
 
 function AuthForm({titleForm, titleLink, titleButton, pathLink, onClickButton, children}) {
     return (
-        <div className="flex items-center justify-center h-full">
+        <div className={"flex items-center justify-center h-full "}>
             <form
                 onSubmit={onClickButton}
                 className={

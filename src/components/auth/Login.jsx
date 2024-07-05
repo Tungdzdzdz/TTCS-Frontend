@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import InputComponent from "../hcom/InputComponent";
 import { useEffect, useLayoutEffect, useState } from "react";
 import AuthForm from "./AuthForm";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { useAppContext } from "../AppContext";
 function Login() {
@@ -56,7 +56,7 @@ function Login() {
 
     return (
         <>
-            <AuthForm pathLink={"/auth/login"} titleButton={"Sign in"} titleForm={"Login"} titleLink={"Forget login detail?"} onClickButton={onLogin}>
+            <AuthForm pathLink={"/auth/login/admin"} titleButton={"Sign in"} titleForm={"Login"} titleLink={"Login by admin account?"} onClickButton={onLogin}>
                 <InputComponent type={"text"} field={"Username"} onChangeInput={onSetUsername} valueInput={username} />
                 <InputComponent type={"password"} field={"Password"} onChangeInput={onSetPassword} valueInput={password} />
             </AuthForm>

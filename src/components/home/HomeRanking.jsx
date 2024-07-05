@@ -3,6 +3,7 @@ import ButtonViewMore from "../hcom/ButtonViewMore";
 import { useEffect, useState } from "react";
 import useData from "../hook/useData";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../AppContext";
 
 const column = {
     pos: "Pos",
@@ -12,17 +13,31 @@ const column = {
 
 function HomeRanking() {
     const [data, setData] = useState(null);
+    const {seasons, client} = useAppContext();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if(!client || !seasons) return; 
+        const subscription = client.subscribe(`/topic/clubstat/${seasons[seasons.length-1].value}`, message => {
+            setData(JSON.parse(message.body));
+        })
+        return () => {
+            if(subscription)
+                subscription.unsubscribe();
+        }
+    }, [seasons, client])
+
     useData(async () => {
-        const url = "http://localhost:3000/standings";
+        if(seasons === undefined) return;
+        const url = `http://localhost:8088/api/v1/clubstat/table/${seasons[seasons.length - 1].value}`;
             const response = await fetch(url);
             try {
                 const fetchData = await response.json();
-                setData(fetchData.standings[0].table);
+                setData(fetchData);
             } catch (error) {
                 toast.error("Error: " + error);
             }
-    })
+    }, [JSON.stringify(seasons)])
 
     return (
         <div className="h-fit w-[350px] border-solid border-[1px] border-[#ebe5eb] rounded-3xl bg-white mr-4 flex flex-col overflow-hidden shadow-xl">

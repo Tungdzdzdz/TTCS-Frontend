@@ -16,24 +16,24 @@ function Table({ column, data, fontSize = 14}) {
                     data.map((e, i) => {
                         return (
                             <tr className={`border-b-2 text-[${fontSize}px]`} key={`row${i}`}>
-                                {pos && <td className="p-2 text-center">{e.position}</td>}
+                                {pos && <td className="p-2 text-center">{e.rank}</td>}
                                 {
                                     club &&
                                     <td className="p-2 flex">
                                         <div className="w-1/4 flex justify-end">
-                                            <img className="mr-5 h-[30px]" src={e.team.crest} />
+                                            <img className="mr-5 h-[30px]" src={e.club.logo} />
                                         </div>
-                                        <label className="self-center grow">{e.team.name}</label>
+                                        <label className="self-center grow">{e.club.name}</label>
                                     </td>
                                 }
-                                {match && <td className="p-2 text-center">{e.playedGames}</td>}
-                                {win && <td className="p-2 text-center">{e.won}</td>}
+                                {match && <td className="p-2 text-center">{e.matchNumber}</td>}
+                                {win && <td className="p-2 text-center">{e.win}</td>}
                                 {draw && <td className="p-2 text-center">{e.draw}</td>}
-                                {lost && <td className="p-2 text-center">{e.lost}</td>}
-                                {gf && <td className="p-2 text-center">{e.goalsFor}</td>}
-                                {ga && <td className="p-2 text-center">{e.goalsAgainst}</td>}
-                                {gd && <td className="p-2 text-center">{e.goalsDifference}</td>}
-                                {point && <td className="p-2 text-center">{e.points}</td>}
+                                {lost && <td className="p-2 text-center">{e.lose}</td>}
+                                {gf && <td className="p-2 text-center">{e.goalTaken}</td>}
+                                {ga && <td className="p-2 text-center">{e.goalReceived}</td>}
+                                {gd && <td className="p-2 text-center">{e.goalTaken - e.goalReceived}</td>}
+                                {point && <td className="p-2 text-center">{e.point}</td>}
                             </tr>
                         )
                     })

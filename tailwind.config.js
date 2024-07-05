@@ -9,6 +9,9 @@ export default {
       width:{
         "extra": 'calc(fit-content + 15px)',
       },
+      backgroundImage: {
+        "football": "url('/src/assets/football.png')",
+      }
     },
   },
   plugins: [],
